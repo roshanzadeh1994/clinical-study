@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import studies, patients  # نسبی نیست چون با app.main اجرا می‌کنی
+from app.routes import studies, patients,followups,analysis  # نسبی نیست چون با app.main اجرا می‌کنی
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
@@ -7,6 +7,10 @@ app = FastAPI()
 # Routers
 app.include_router(studies.router)
 app.include_router(patients.router)
+app.include_router(followups.router)
+app.include_router(analysis.router)
+
+
 
 import logging
 

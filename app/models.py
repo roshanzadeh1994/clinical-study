@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey,Float, Date, Boolean
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -21,3 +21,18 @@ class Patient(Base):
     study_id = Column(Integer, ForeignKey("studies.id"))
 
     study = relationship("Study", back_populates="patients")
+
+
+
+class FollowUp(Base):
+    __tablename__ = "followups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"))
+    visit_no = Column(Integer)
+    visit_date = Column(Date)
+    dose_given = Column(Integer)
+    side_effects = Column(Boolean)
+    tumor_size = Column(Float)
+
+    patient = relationship("Patient", backref="followups")

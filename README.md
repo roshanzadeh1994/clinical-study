@@ -38,7 +38,7 @@ Eine vollständige Webanwendung zur **Verwaltung und Analyse klinischer Studiend
 ## 🧰 Installation
 
 ```bash
-git clone https://github.com/dein-benutzername/clinical-study-tracker.git
+git clone https://github.com/roshanzadeh1994/clinical-study-tracker.git
 ```
 ```bash
 cd clinical-study-tracker

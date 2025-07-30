@@ -39,5 +39,10 @@ Eine vollständige Webanwendung zur **Verwaltung und Analyse klinischer Studiend
 
 ```bash
 git clone https://github.com/dein-benutzername/clinical-study-tracker.git
+```
+```bash
 cd clinical-study-tracker
+```
+```bash
 docker-compose up --build
+```

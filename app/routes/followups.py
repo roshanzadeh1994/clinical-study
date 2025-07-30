@@ -1,43 +1,34 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-import csv
-import io
 from app.routes.studies import get_db
-from ..db import models
+from app.db.models import FollowUp
+import pandas as pd
+import io
 
+router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
+@router.get("/analysis/followups_csv")
+def export_followups_csv(db: Session = Depends(get_db)):
+    followups = db.query(FollowUp).all()
 
-router = APIRouter(prefix="/followups", tags=["FollowUps"])
+    # ساخت DataFrame از داده‌های ORM
+    df = pd.DataFrame([{
+        "patient_id": f.patient_id,
+        "visit_no": f.visit_no,
+        "visit_date": f.visit_date,
+        "dose_given": f.dose_given,
+        "side_effects": f.side_effects,
+        "tumor_size": f.tumor_size,
+    } for f in followups])
 
+    # ذخیره در CSV در حافظه
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
 
-@router.post("/upload_csv")
-async def upload_followups_csv(
-    file: UploadFile = File(...), db: Session = Depends(get_db)
-):
-    if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a CSV file")
-
-    content = await file.read()
-    decoded_stream = io.StringIO(content.decode("utf-8"), newline='')  # ← اصلاح اصلی اینجاست
-    reader = csv.DictReader(decoded_stream)
-
-
-    records_created = 0
-    for row in reader:
-        try:
-            followup = models.FollowUp(
-                patient_id=int(row["patient_id"]),
-                visit_no=int(row["visit_no"]),
-                visit_date=row["visit_date"],
-                dose_given=int(row["dose_given"]),
-                side_effects=row["side_effects"].lower() == "true",
-                tumor_size=float(row["tumor_size"]),
-            )
-            db.add(followup)
-            records_created += 1
-        except Exception as e:
-            db.rollback()
-            raise HTTPException(status_code=400, detail=f"Error in row: {row} | {e}")
-
-    db.commit()
-    return {"message": f"{records_created} follow-up records successfully imported."}
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=followups.csv"},
+    )

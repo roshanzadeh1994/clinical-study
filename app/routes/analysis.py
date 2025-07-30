@@ -1,52 +1,59 @@
-from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, File, UploadFile, Depends
 from sqlalchemy.orm import Session
 from app.routes.studies import get_db
-from app.db.models import FollowUp
-import csv
-import io
+from app.db.models import FollowUp, Patient
+import pandas as pd
+from io import StringIO
 
-router = APIRouter(prefix="/analysis", tags=["Analysis"])
+router = APIRouter(prefix="/followups", tags=["Followups"])
 
+@router.post("/upload_csv")
+async def upload_followups_csv(
+    file: UploadFile = File(...), db: Session = Depends(get_db)
+):
+    contents = await file.read()
+    decoded = contents.decode("utf-8")
+    df = pd.read_csv(StringIO(decoded))
 
-@router.get(
-    "/analysis/followups_csv"
-)
-def export_followups_csv(db: Session = Depends(get_db)):
-    followups = db.query(FollowUp).all()
+    # ستون‌های مورد نیاز
+    required_columns = {
+        "patient_id", "visit_no", "visit_date",
+        "dose_given", "side_effects", "tumor_size"
+    }
 
-    # آماده‌سازی فایل CSV در حافظه
-    output = io.StringIO()
-    writer = csv.writer(output)
+    if not required_columns.issubset(df.columns):
+        return {"error": f"Missing columns. Required: {required_columns}"}
 
-    # نوشتن header
-    writer.writerow(
-        [
-            "patient_id",
-            "visit_no",
-            "visit_date",
-            "dose_given",
-            "side_effects",
-            "tumor_size",
-        ]
-    )
+    # تبدیل به داده‌های مناسب
+    try:
+        df["visit_date"] = pd.to_datetime(df["visit_date"]).dt.date
+        df["side_effects"] = df["side_effects"].astype(bool)
+    except Exception as e:
+        return {"error": f"Invalid data types in CSV: {str(e)}"}
 
-    # نوشتن داده‌ها
-    for f in followups:
-        writer.writerow(
-            [
-                f.patient_id,
-                f.visit_no,
-                f.visit_date,
-                f.dose_given,
-                f.side_effects,
-                f.tumor_size,
-            ]
+    # استخراج تمام patient_id‌های معتبر از جدول patient
+    valid_ids = {p.id for p in db.query(Patient.id).all()}
+    invalid_ids = set(df["patient_id"]) - valid_ids
+
+    if invalid_ids:
+        return {
+            "error": f"The following patient_ids do not exist: {sorted(invalid_ids)}"
+        }
+
+    # تبدیل به ORM
+    followups = [
+        FollowUp(
+            patient_id=int(row["patient_id"]),
+            visit_no=int(row["visit_no"]),
+            visit_date=row["visit_date"],
+            dose_given=int(row["dose_given"]),
+            side_effects=bool(row["side_effects"]),
+            tumor_size=float(row["tumor_size"]),
         )
+        for _, row in df.iterrows()
+    ]
 
-    output.seek(0)
-    return StreamingResponse(
-        output,
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=followups.csv"},
-    )
+    db.add_all(followups)
+    db.commit()
+
+    return {"message": f"{len(followups)} followups successfully inserted."}

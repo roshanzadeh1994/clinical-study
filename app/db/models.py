@@ -1,3 +1,4 @@
+# pylint: disable=missing-class-docstring, too-few-public-methods, no-member
 from sqlalchemy import Column, Integer, String, ForeignKey,Float, Date, Boolean
 from sqlalchemy.orm import relationship
 from app.db.database import Base

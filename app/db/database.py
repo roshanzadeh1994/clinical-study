@@ -1,3 +1,4 @@
+# pylint: disable=missing-class-docstring, too-few-public-methods, no-member
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os

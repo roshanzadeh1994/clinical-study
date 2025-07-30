@@ -9,7 +9,9 @@ import io
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 
-@router.get("/analysis/followups_csv")
+@router.get(
+    "/analysis/followups_csv"
+)
 def export_followups_csv(db: Session = Depends(get_db)):
     followups = db.query(FollowUp).all()
 
@@ -48,6 +50,3 @@ def export_followups_csv(db: Session = Depends(get_db)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=followups.csv"},
     )
-
-
-

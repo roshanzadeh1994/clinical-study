@@ -2,17 +2,9 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 import csv
 import io
-from io import TextIOWrapper
-from ..database import SessionLocal
-from .. import models, schemas
+from app.routes.studies import get_db
+from ..db import models
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 router = APIRouter(prefix="/followups", tags=["FollowUps"])

@@ -1,15 +1,14 @@
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# نصب پیش‌نیازها
+COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# کپی کدهای پروژه
 COPY ./app /app/app
 COPY ./init_db.py /app/init_db.py
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# اجرای init_db و بعد اجرای برنامه
+CMD ["sh", "-c", "python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]

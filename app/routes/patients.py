@@ -1,17 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import models, schemas
-from ..database import SessionLocal
+from app.routes.studies import get_db
+from ..db import models
+from .. import schemas
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/patients/", response_model=schemas.PatientOut)
@@ -22,9 +15,11 @@ def create_patient(patient: schemas.PatientCreate, db: Session = Depends(get_db)
     db.refresh(new_patient)
     return new_patient
 
+
 @router.get("/patients/", response_model=list[schemas.PatientOut])
 def get_patients(db: Session = Depends(get_db)):
     return db.query(models.Patient).all()
+
 
 @router.get("/studies/{study_id}/patients", response_model=list[schemas.PatientOut])
 def get_patients_for_study(study_id: int, db: Session = Depends(get_db)):

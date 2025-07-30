@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from .followups import get_db
-from app.models import FollowUp
+from app.routes.studies import get_db
+from app.db.models import FollowUp
 import csv
 import io
 

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import studies, patients,followups,analysis  # نسبی نیست چون با app.main اجرا می‌کنی
+from app.routes import studies, patients,followups,analysis ,dicom_reader # نسبی نیست چون با app.main اجرا می‌کنی
 from fastapi.responses import JSONResponse
 from app.db.database import Base, engine
 
@@ -11,6 +11,7 @@ app.include_router(studies.router)
 app.include_router(patients.router)
 app.include_router(followups.router)
 app.include_router(analysis.router)
+app.include_router(dicom_reader.router)  # اینو زیر سایر routerها اضافه کن
 
 
 

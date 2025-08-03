@@ -2,28 +2,36 @@ from fastapi import APIRouter, UploadFile, File
 import pydicom
 import shutil
 import os
-from fastapi.responses import JSONResponse, FileResponse
 from PIL import Image
 import numpy as np
+from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import Response, JSONResponse
+from io import BytesIO
 
 router = APIRouter(tags=["Dicom"])
 
 
 
 
-def dicom_to_png(dicom_path, output_path):
+router = APIRouter(tags=["Dicom"])
+
+UPLOAD_DIR = "./images-dicom"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def dicom_to_png_bytes(dicom_path):
     ds = pydicom.dcmread(dicom_path)
 
-    # بررسی وجود داده تصویری
     if not hasattr(ds, 'pixel_array'):
         raise ValueError("No pixel data found in DICOM file.")
 
     pixel_array = ds.pixel_array.astype(float)
-
-    # نرمال‌سازی به 0-255 و تبدیل به تصویر خاکستری
-    normalized = ((pixel_array - pixel_array.min()) / (pixel_array.ptp()) * 255.0).astype(np.uint8)
+    normalized = ((pixel_array - pixel_array.min()) / pixel_array.ptp() * 255.0).astype(np.uint8)
     image = Image.fromarray(normalized).convert("L")
-    image.save(output_path)
+
+    img_bytes = BytesIO()
+    image.save(img_bytes, format="PNG")
+    img_bytes.seek(0)
+    return img_bytes
 
 UPLOAD_DIR = "./images-dicom/001848_001.dcm"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -52,13 +60,18 @@ async def upload_dicom(file: UploadFile = File(...)):
 
 
 
-@router.get("/dicom/preview/{filename}")
-async def preview_dicom(filename: str):
-    dicom_path = f"{UPLOAD_DIR}/{filename}"
-    png_path = f"{UPLOAD_DIR}/{filename}.png"
+
+
+@router.post("/dicom/upload-preview")
+async def upload_and_preview(file: UploadFile = File(...)):
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
     try:
-        dicom_to_png(dicom_path, png_path)
-        return FileResponse(png_path, media_type="image/png")
+        img_bytes = dicom_to_png_bytes(file_path)
+        return Response(content=img_bytes.read(), media_type="image/png")
+    
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

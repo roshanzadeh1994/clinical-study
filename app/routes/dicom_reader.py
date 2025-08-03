@@ -4,7 +4,7 @@ import shutil
 import os
 from fastapi.responses import JSONResponse
 
-router = APIRouter(prefix="/DICOM")
+router = APIRouter(tags=["Dicom"])
 
 UPLOAD_DIR = "./images-dicom/001848_001.dcm"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

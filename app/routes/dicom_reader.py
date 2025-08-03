@@ -25,13 +25,25 @@ def dicom_to_png_bytes(dicom_path):
         raise ValueError("No pixel data found in DICOM file.")
 
     pixel_array = ds.pixel_array.astype(float)
-    normalized = ((pixel_array - pixel_array.min()) / np.ptp(pixel_array) * 255.0).astype(np.uint8)
+
+    # استفاده از window center و window width اگر موجود بودن
+    wc = float(ds.get("WindowCenter", pixel_array.mean()))
+    ww = float(ds.get("WindowWidth", pixel_array.ptp()))
+
+    # نرمال‌سازی با windowing
+    min_val = wc - ww / 2
+    max_val = wc + ww / 2
+
+    clipped = np.clip(pixel_array, min_val, max_val)
+    normalized = ((clipped - min_val) / (max_val - min_val) * 255.0).astype(np.uint8)
+
     image = Image.fromarray(normalized).convert("L")
 
     img_bytes = BytesIO()
     image.save(img_bytes, format="PNG")
     img_bytes.seek(0)
     return img_bytes
+
 
 UPLOAD_DIR = "./images-dicom/001848_001.dcm"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

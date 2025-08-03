@@ -23,4 +23,3 @@ async def global_exception_handler(request, exc):
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
-base

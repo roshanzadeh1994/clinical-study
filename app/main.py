@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from app.routes import studies, patients,followups,analysis  # نسبی نیست چون با app.main اجرا می‌کنی
 from fastapi.responses import JSONResponse
+from app.db.database import Base, engine
 
 app = FastAPI()
 
+Base.metadata.create_all(bind=engine)
 # Routers
 app.include_router(studies.router)
 app.include_router(patients.router)
@@ -21,3 +23,4 @@ async def global_exception_handler(request, exc):
         status_code=500,
         content={"detail": "Internal Server Error"},
     )
+base

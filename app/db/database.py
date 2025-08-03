@@ -5,7 +5,8 @@ import os
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@postgres:5432/clinical_db"
+  #  "postgresql://postgres:postgres@postgres:5432/clinical_db"
+    "postgresql://amir:amir@localhost:5432/marvin_db"
 )
 
 engine = create_engine(

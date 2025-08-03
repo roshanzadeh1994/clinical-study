@@ -27,8 +27,8 @@ def dicom_to_png_bytes(dicom_path):
     pixel_array = ds.pixel_array.astype(float)
 
     # استفاده از window center و window width اگر موجود بودن
-    wc = float(ds.get("WindowCenter", pixel_array.mean()))
-    ww = float(ds.get("WindowWidth", pixel_array.ptp()))
+    wc = float(ds.get("WindowCenter", np.mean(pixel_array)))
+    ww = float(ds.get("WindowWidth", np.ptp(pixel_array)))
 
     # نرمال‌سازی با windowing
     min_val = wc - ww / 2

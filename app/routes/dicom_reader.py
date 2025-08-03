@@ -19,30 +19,35 @@ UPLOAD_DIR = "./images-dicom"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def dicom_to_png_bytes(dicom_path):
+    import pydicom
+    from PIL import Image
+    import numpy as np
+    import io
+
     ds = pydicom.dcmread(dicom_path)
-    
-    # گرفتن تصویر
     pixel_array = ds.pixel_array
-    pixel_array = np.squeeze(pixel_array)  # حذف ابعاد اضافی (1,1,X) → (X)
+    pixel_array = np.squeeze(pixel_array)
 
-    # بررسی نهایی اینکه دوبعدیه
+    # اگر هنوز سه‌بعدی بود (مثل 21, 512, 512) → یکی از اسلایدها رو انتخاب کن
+    if pixel_array.ndim == 3:
+        pixel_array = pixel_array[0]  # فقط اولین اسلاید
+
     if pixel_array.ndim != 2:
-        raise ValueError(f"Unsupported pixel array shape: {pixel_array.shape}")
+        raise ValueError(f"Unsupported pixel array shape after squeeze: {pixel_array.shape}")
 
-    # نرمال‌سازی
     if np.ptp(pixel_array) > 0:
         image_2d = (pixel_array - np.min(pixel_array)) / np.ptp(pixel_array) * 255.0
     else:
         image_2d = np.zeros_like(pixel_array)
 
     image_2d = image_2d.astype(np.uint8)
-
-    # ساخت تصویر و تبدیل به bytes
     img = Image.fromarray(image_2d)
+
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     buf.seek(0)
     return buf
+
 
 
 

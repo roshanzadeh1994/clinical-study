@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/DICOM")
 
-UPLOAD_DIR = "app/images-dicom/001848_001.dcm"
+UPLOAD_DIR = "./images-dicom/001848_001.dcm"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/dicom/upload")

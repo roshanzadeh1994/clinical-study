@@ -25,7 +25,7 @@ def dicom_to_png_bytes(dicom_path):
         raise ValueError("No pixel data found in DICOM file.")
 
     pixel_array = ds.pixel_array.astype(float)
-    normalized = ((pixel_array - pixel_array.min()) / pixel_array.ptp() * 255.0).astype(np.uint8)
+    normalized = ((pixel_array - pixel_array.min()) / np.ptp(pixel_array) * 255.0).astype(np.uint8)
     image = Image.fromarray(normalized).convert("L")
 
     img_bytes = BytesIO()

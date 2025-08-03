@@ -20,29 +20,30 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def dicom_to_png_bytes(dicom_path):
     ds = pydicom.dcmread(dicom_path)
+    
+    # گرفتن تصویر
+    pixel_array = ds.pixel_array
+    pixel_array = np.squeeze(pixel_array)  # حذف ابعاد اضافی (1,1,X) → (X)
 
-    if not hasattr(ds, 'pixel_array'):
-        raise ValueError("No pixel data found in DICOM file.")
+    # بررسی نهایی اینکه دوبعدیه
+    if pixel_array.ndim != 2:
+        raise ValueError(f"Unsupported pixel array shape: {pixel_array.shape}")
 
-    pixel_array = ds.pixel_array.astype(float)
+    # نرمال‌سازی
+    if np.ptp(pixel_array) > 0:
+        image_2d = (pixel_array - np.min(pixel_array)) / np.ptp(pixel_array) * 255.0
+    else:
+        image_2d = np.zeros_like(pixel_array)
 
-    # استفاده از window center و window width اگر موجود بودن
-    wc = float(ds.get("WindowCenter", np.mean(pixel_array)))
-    ww = float(ds.get("WindowWidth", np.ptp(pixel_array)))
+    image_2d = image_2d.astype(np.uint8)
 
-    # نرمال‌سازی با windowing
-    min_val = wc - ww / 2
-    max_val = wc + ww / 2
+    # ساخت تصویر و تبدیل به bytes
+    img = Image.fromarray(image_2d)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return buf
 
-    clipped = np.clip(pixel_array, min_val, max_val)
-    normalized = ((clipped - min_val) / (max_val - min_val) * 255.0).astype(np.uint8)
-
-    image = Image.fromarray(normalized).convert("L")
-
-    img_bytes = BytesIO()
-    image.save(img_bytes, format="PNG")
-    img_bytes.seek(0)
-    return img_bytes
 
 
 UPLOAD_DIR = "./images-dicom/001848_001.dcm"
